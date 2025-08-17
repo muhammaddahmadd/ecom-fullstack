@@ -22,23 +22,14 @@ app.get('/', (_req: Request, res: Response) => {
     version: '3.0.0',
     database: 'MongoDB',
     endpoints: {
-      health: '/health',
+
       products: '/api/products',
       cart: '/api/cart'
     }
   });
 });
 
-// Health check route
-app.get('/health', (_req: Request, res: Response) => {
-  res.json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development',
-    database: 'MongoDB'
-  });
-});
+
 
 // API Routes
 app.use('/api/products', productsRoutes);
@@ -51,7 +42,6 @@ app.use('*', (req: Request, res: Response) => {
     error: 'Route not found',
     message: `The requested route ${req.originalUrl} does not exist`,
     availableEndpoints: {
-      health: '/health',
       products: '/api/products',
       cart: '/api/cart'
     }
@@ -73,11 +63,6 @@ app.use((error: Error, _req: Request, res: Response, _next: NextFunction) => {
 // Start the server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server is running on http://0.0.0.0:${PORT}`);
-  console.log('📊 Database: MongoDB');
-  console.log('Available endpoints:');
-  console.log(`- GET /health`);
-  console.log(`- GET /api/products`);
-  console.log(`- GET /api/cart`);
   console.log(`📱 Server URL: http://localhost:${PORT}`);
   console.log(`🔍 Health check: http://localhost:${PORT}/health`);
   console.log(`🛍️  Products API: http://localhost:${PORT}/api/products`);

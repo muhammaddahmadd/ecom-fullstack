@@ -178,14 +178,6 @@ export const getCartItem = async (id: string): Promise<CartItem | null> => {
   }
 };
 
-// Health check
-export const checkHealth = async (): Promise<{ status: string; timestamp: string }> => {
-  try {
-    const response = await api.get('/health');
-    return response.data;
-  } catch (error) {
-    return handleApiError(error);
-  }
-};
+
 
 export default api;

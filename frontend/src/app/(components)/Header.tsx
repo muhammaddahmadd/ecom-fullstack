@@ -35,7 +35,7 @@ export default function Header() {
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      isScrolled ? 'bg-white/95 backdrop-blur-md shadow-lg' : 'bg-white'
+      isScrolled ? 'bg-black backdrop-blur-md shadow-lg' : 'bg-black'
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
@@ -44,26 +44,26 @@ export default function Header() {
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">E</span>
             </div>
-            <span className="text-xl font-bold text-gray-900">EcomStore</span>
+           
           </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             <Link 
               href="/" 
-              className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium"
+              className="text-white-700 hover:text-blue-600 transition-colors duration-200 font-medium"
             >
               Home
             </Link>
             <Link 
               href="/products" 
-              className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium"
+              className="text-white-700 hover:text-blue-600 transition-colors duration-200 font-medium"
             >
               Products
             </Link>
             <Link 
               href="/cart" 
-              className="text-gray-700 hover:text-blue-600 transition-colors duration-200 font-medium"
+              className="text-white-700 hover:text-blue-600 transition-colors duration-200 font-medium"
             >
               Cart
             </Link>
@@ -73,7 +73,7 @@ export default function Header() {
           <div className="flex items-center space-x-4">
             <Link 
               href="/cart" 
-              className="relative p-2 text-gray-700 hover:text-blue-600 transition-colors duration-200 group"
+              className="relative p-2 text-white-700 hover:text-blue-600 transition-colors duration-200 group"
             >
               <ShoppingCart className="w-6 h-6 group-hover:scale-110 transition-transform duration-200" />
               {cartCount > 0 && (

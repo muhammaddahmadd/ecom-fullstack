@@ -1,17 +1,21 @@
 # 🛍️ E-commerce Full-Stack Application
 
-A modern e-commerce platform built with Next.js 14 (App Router) frontend and Node.js/Express backend with MongoDB.
+A modern e-commerce platform built with Next.js 15 (App Router) frontend and Node.js/Express backend with MongoDB.
 
 ## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 18+ 
+- MongoDB (local or Atlas)
+- npm or yarn
 
 ### Backend Setup
 ```bash
 # Install dependencies
 npm install
 
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your MongoDB connection string
+# Build the project
+npm run build
 
 # Seed database with sample products
 npm run db:seed
@@ -27,10 +31,6 @@ cd frontend
 # Install dependencies
 npm install
 
-# Set up environment variables
-cp .env.local.example .env.local
-# Edit .env.local with your backend API URL
-
 # Start development server
 npm run dev
 ```
@@ -45,9 +45,9 @@ npm run dev
 - **dotenv** - Environment variables
 
 ### Frontend
-- **Next.js 14** - React framework with App Router
+- **Next.js 15** - React framework with App Router
 - **TypeScript** - Type safety
-- **Tailwind CSS** - Utility-first CSS framework
+- **Tailwind CSS v4** - Utility-first CSS framework
 - **Axios** - HTTP client
 - **Lucide React** - Icon library
 
@@ -100,42 +100,55 @@ npm run dev
 - `PUT /api/cart/:id` - Update cart item
 - `DELETE /api/cart/:id` - Remove item from cart
 
-## 🚀 Deployment
 
-### Backend (Render)
-- Free tier hosting
-- Auto-deploy from GitHub
-- Environment variables support
-
-### Frontend (Vercel)
-- Automatic deployments
-- Edge network
-- Environment variables
 
 ## 📁 Project Structure
 
 ```
 ├── src/                    # Backend source
+│   ├── config/            # Database configuration
 │   ├── controllers/       # API controllers
 │   ├── models/           # MongoDB schemas
 │   ├── routes/           # API routes
-│   └── config/           # Database config
+│   └── scripts/          # Database seeding
 ├── frontend/              # Next.js app
 │   ├── src/app/          # App Router pages
+│   │   ├── (components)/ # Shared components
+│   │   ├── cart/         # Cart page
+│   │   ├── checkout/     # Checkout pages
+│   │   └── products/     # Products page
 │   └── src/lib/          # Utilities & API
-└── scripts/               # Database seeding
+├── dist/                  # Compiled backend
+└── package.json           # Backend dependencies
 ```
 
-## 🔑 Environment Variables
 
-### Backend (.env)
-```
-NODE_ENV=development
-PORT=3001
-MONGODB_URI=mongodb://localhost:27017/ecommerce
-```
 
-### Frontend (.env.local)
-```
-NEXT_PUBLIC_API_BASE_URL=http://localhost:3001
-```
+## 🛠️ Available Scripts
+
+### Backend
+- `npm run dev` - Start development server with nodemon
+- `npm run build` - Compile TypeScript to JavaScript
+- `npm start` - Start production server
+- `npm run db:seed` - Seed database with sample data
+- `npm run clean` - Remove compiled files
+
+### Frontend
+- `npm run dev` - Start development server with Turbopack
+- `npm run build` - Build for production
+- `npm start` - Start production server
+- `npm run lint` - Run ESLint
+
+## 🔍 Troubleshooting
+
+### Common Issues
+1. **MongoDB Connection**: Ensure MongoDB is running and connection string is correct
+2. **Port Conflicts**: Backend runs on port 3001, frontend on port 3000
+3. **CORS Errors**: Backend has CORS enabled for localhost:3000
+4. **Build Errors**: Run `npm run build` in backend before starting
+
+### Development Tips
+- Backend auto-restarts with nodemon on file changes
+- Frontend uses Turbopack for faster development builds
+- Use `npm run db:seed` to populate database with sample products
+- Check console logs for detailed error messages

@@ -1,6 +1,14 @@
 {
-  "items": [],
-  "total": 0,
-  "itemCount": 0,
-  "updatedAt": "2025-08-17T14:58:41.126Z"
+  "items": [
+    {
+      "id": "2",
+      "name": "Smart Fitness Watch",
+      "price": 199.99,
+      "quantity": 2,
+      "image": "https://picsum.photos/300/300?random=2"
+    }
+  ],
+  "total": 399.98,
+  "itemCount": 2,
+  "updatedAt": "2025-08-17T16:35:52.861Z"
 }

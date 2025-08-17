@@ -1,291 +1,244 @@
 import { Request, Response } from 'express';
-import { 
-  readCartFromFile, 
-  addItemToCart, 
-  updateCartItemQuantity, 
-  removeItemFromCart, 
-  clearCart,
-  getCartItemById 
-} from '../utils/cartUtils';
-import { AddToCartRequest, UpdateCartItemRequest, CartResponse } from '../models/Cart';
+import { CartItem } from '../models/Cart';
+import { readCartFromFile, writeCartToFile } from '../utils/cartUtils';
 
-export const getCart = async (_req: Request, res: Response): Promise<void> => {
+// Enhanced error response helper
+const sendErrorResponse = (res: Response, statusCode: number, message: string, details?: any) => {
+  return res.status(statusCode).json({
+    success: false,
+    error: message,
+    details,
+    timestamp: new Date().toISOString()
+  });
+};
+
+// Enhanced success response helper
+const sendSuccessResponse = (res: Response, data: any, message?: string) => {
+  return res.json({
+    success: true,
+    data,
+    message,
+    timestamp: new Date().toISOString()
+  });
+};
+
+// Validation helper
+const validateCartItem = (item: any): { isValid: boolean; errors: string[] } => {
+  const errors: string[] = [];
+
+  if (!item.id || typeof item.id !== 'string') {
+    errors.push('Item ID is required and must be a string');
+  }
+
+  if (!item.name || typeof item.name !== 'string') {
+    errors.push('Item name is required and must be a string');
+  }
+
+  if (typeof item.price !== 'number' || item.price <= 0) {
+    errors.push('Item price is required and must be a positive number');
+  }
+
+  if (typeof item.quantity !== 'number' || item.quantity <= 0) {
+    errors.push('Item quantity is required and must be a positive number');
+  }
+
+  if (item.quantity > 100) {
+    errors.push('Item quantity cannot exceed 100');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
+export const getCart = async (_req: Request, res: Response) => {
   try {
     const cart = await readCartFromFile();
-    
-    const response: CartResponse = {
-      success: true,
-      data: cart,
-      message: 'Cart retrieved successfully',
-    };
-    
-    res.status(200).json(response);
+    return sendSuccessResponse(res, cart.items, 'Cart retrieved successfully');
   } catch (error) {
-    console.error('Error fetching cart:', error);
-    
-    const response: CartResponse = {
-      success: false,
-      error: 'Internal server error while fetching cart',
-      message: 'Failed to retrieve cart',
-    };
-    
-    res.status(500).json(response);
+    console.error('Error reading cart data:', error);
+    return sendErrorResponse(
+      res, 
+      500, 
+      'Failed to retrieve cart data',
+      { originalError: error instanceof Error ? error.message : 'Unknown error' }
+    );
   }
 };
 
-export const addToCart = async (req: Request, res: Response): Promise<void> => {
+export const addToCart = async (req: Request, res: Response) => {
   try {
-    const cartItem: AddToCartRequest = req.body;
-    
-    // Validation
-    if (!cartItem.id || !cartItem.name || !cartItem.price || !cartItem.quantity) {
-      const response: CartResponse = {
-        success: false,
-        error: 'Missing required fields',
-        message: 'Please provide id, name, price, and quantity',
-      };
-      res.status(400).json(response);
-      return;
+    const newItem: CartItem = req.body;
+
+    // Validate input
+    const validation = validateCartItem(newItem);
+    if (!validation.isValid) {
+      return sendErrorResponse(res, 400, 'Invalid cart item data', { validationErrors: validation.errors });
     }
-    
-    if (cartItem.price <= 0) {
-      const response: CartResponse = {
-        success: false,
-        error: 'Invalid price',
-        message: 'Price must be greater than 0',
+
+    // Read existing cart
+    let cart;
+    try {
+      cart = await readCartFromFile();
+    } catch (error) {
+      console.error('Error reading cart data:', error);
+      cart = {
+        items: [],
+        total: 0,
+        itemCount: 0,
+        updatedAt: new Date(),
       };
-      res.status(400).json(response);
-      return;
     }
-    
-    if (cartItem.quantity <= 0) {
-      const response: CartResponse = {
-        success: false,
-        error: 'Invalid quantity',
-        message: 'Quantity must be greater than 0',
-      };
-      res.status(400).json(response);
-      return;
+
+    // Check if item already exists
+    const existingItemIndex = cart.items.findIndex(item => item.id === newItem.id);
+
+    if (existingItemIndex !== -1) {
+      // Update quantity of existing item
+      const updatedQuantity = cart.items[existingItemIndex].quantity + newItem.quantity;
+      
+      if (updatedQuantity > 100) {
+        return sendErrorResponse(res, 400, 'Total quantity cannot exceed 100 for a single item');
+      }
+      
+      cart.items[existingItemIndex].quantity = updatedQuantity;
+    } else {
+      // Add new item
+      cart.items.push(newItem);
     }
-    
-    const updatedCart = await addItemToCart(cartItem);
-    
-    const response: CartResponse = {
-      success: true,
-      data: updatedCart,
-      message: 'Item added to cart successfully',
-    };
-    
-    res.status(201).json(response);
+
+    // Write updated cart
+    await writeCartToFile(cart);
+
+    return sendSuccessResponse(res, cart.items, 'Item added to cart successfully');
   } catch (error) {
     console.error('Error adding item to cart:', error);
-    
-    const response: CartResponse = {
-      success: false,
-      error: 'Internal server error while adding item to cart',
-      message: 'Failed to add item to cart',
-    };
-    
-    res.status(500).json(response);
+    return sendErrorResponse(
+      res, 
+      500, 
+      'Failed to add item to cart',
+      { originalError: error instanceof Error ? error.message : 'Unknown error' }
+    );
   }
 };
 
-export const updateCartItem = async (req: Request, res: Response): Promise<void> => {
+export const updateCartItem = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { quantity }: UpdateCartItemRequest = req.body;
-    
+    const { quantity } = req.body;
+
+    // Validate input
     if (!id) {
-      const response: CartResponse = {
-        success: false,
-        error: 'Item ID is required',
-        message: 'Please provide a valid item ID',
-      };
-      res.status(400).json(response);
-      return;
+      return sendErrorResponse(res, 400, 'Item ID is required');
     }
-    
-    if (quantity === undefined || quantity <= 0) {
-      const response: CartResponse = {
-        success: false,
-        error: 'Invalid quantity',
-        message: 'Quantity must be greater than 0',
-      };
-      res.status(400).json(response);
-      return;
+
+    if (typeof quantity !== 'number' || quantity <= 0) {
+      return sendErrorResponse(res, 400, 'Quantity must be a positive number');
     }
-    
-    // Check if item exists in cart
-    const existingItem = await getCartItemById(id);
-    if (!existingItem) {
-      const response: CartResponse = {
-        success: false,
-        error: 'Item not found',
-        message: `Item with ID ${id} is not in the cart`,
-      };
-      res.status(404).json(response);
-      return;
+
+    if (quantity > 100) {
+      return sendErrorResponse(res, 400, 'Quantity cannot exceed 100');
     }
-    
-    const updatedCart = await updateCartItemQuantity(id, quantity);
-    
-    const response: CartResponse = {
-      success: true,
-      data: updatedCart,
-      message: 'Cart item updated successfully',
-    };
-    
-    res.status(200).json(response);
+
+    // Read existing cart
+    let cart;
+    try {
+      cart = await readCartFromFile();
+    } catch (error) {
+      console.error('Error reading cart data:', error);
+      return sendErrorResponse(res, 500, 'Failed to read cart data');
+    }
+
+    // Find item to update
+    const itemIndex = cart.items.findIndex(item => item.id === id);
+
+    if (itemIndex === -1) {
+      return sendErrorResponse(res, 404, 'Item not found in cart');
+    }
+
+    // Update quantity
+    cart.items[itemIndex].quantity = quantity;
+
+    // Write updated cart
+    await writeCartToFile(cart);
+
+    return sendSuccessResponse(res, cart.items, 'Cart item updated successfully');
   } catch (error) {
     console.error('Error updating cart item:', error);
-    
-    let statusCode = 500;
-    let errorMessage = 'Internal server error while updating cart item';
-    
-    if (error instanceof Error) {
-      if (error.message === 'Quantity must be greater than 0') {
-        statusCode = 400;
-        errorMessage = error.message;
-      } else if (error.message === 'Item not found in cart') {
-        statusCode = 404;
-        errorMessage = error.message;
-      }
-    }
-    
-    const response: CartResponse = {
-      success: false,
-      error: errorMessage,
-      message: 'Failed to update cart item',
-    };
-    
-    res.status(statusCode).json(response);
+    return sendErrorResponse(
+      res, 
+      500, 
+      'Failed to update cart item',
+      { originalError: error instanceof Error ? error.message : 'Unknown error' }
+    );
   }
 };
 
-export const removeFromCart = async (req: Request, res: Response): Promise<void> => {
+export const removeFromCart = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    
+
+    // Validate input
     if (!id) {
-      const response: CartResponse = {
-        success: false,
-        error: 'Item ID is required',
-        message: 'Please provide a valid item ID',
-      };
-      res.status(400).json(response);
-      return;
+      return sendErrorResponse(res, 400, 'Item ID is required');
     }
-    
-    // Check if item exists in cart
-    const existingItem = await getCartItemById(id);
-    if (!existingItem) {
-      const response: CartResponse = {
-        success: false,
-        error: 'Item not found',
-        message: `Item with ID ${id} is not in the cart`,
-      };
-      res.status(404).json(response);
-      return;
+
+    // Read existing cart
+    let cart;
+    try {
+      cart = await readCartFromFile();
+    } catch (error) {
+      console.error('Error reading cart data:', error);
+      return sendErrorResponse(res, 500, 'Failed to read cart data');
     }
-    
-    const updatedCart = await removeItemFromCart(id);
-    
-    const response: CartResponse = {
-      success: true,
-      data: updatedCart,
-      message: 'Item removed from cart successfully',
-    };
-    
-    res.status(200).json(response);
+
+    // Find item to remove
+    const itemIndex = cart.items.findIndex(item => item.id === id);
+
+    if (itemIndex === -1) {
+      return sendErrorResponse(res, 404, 'Item not found in cart');
+    }
+
+    // Remove item
+    cart.items.splice(itemIndex, 1);
+
+    // Write updated cart
+    await writeCartToFile(cart);
+
+    return sendSuccessResponse(res, cart.items, 'Item removed from cart successfully');
   } catch (error) {
     console.error('Error removing item from cart:', error);
-    
-    let statusCode = 500;
-    let errorMessage = 'Internal server error while removing item from cart';
-    
-    if (error instanceof Error) {
-      if (error.message === 'Item not found in cart') {
-        statusCode = 404;
-        errorMessage = error.message;
-      }
-    }
-    
-    const response: CartResponse = {
-      success: false,
-      error: errorMessage,
-      message: 'Failed to remove item from cart',
-    };
-    
-    res.status(statusCode).json(response);
+    return sendErrorResponse(
+      res, 
+      500, 
+      'Failed to remove item from cart',
+      { originalError: error instanceof Error ? error.message : 'Unknown error' }
+    );
   }
 };
 
-export const clearCartItems = async (_req: Request, res: Response): Promise<void> => {
+export const clearCartItems = async (_req: Request, res: Response) => {
   try {
-    const updatedCart = await clearCart();
-    
-    const response: CartResponse = {
-      success: true,
-      data: updatedCart,
-      message: 'Cart cleared successfully',
+    // Create empty cart
+    const emptyCart = {
+      items: [],
+      total: 0,
+      itemCount: 0,
+      updatedAt: new Date(),
     };
-    
-    res.status(200).json(response);
+
+    // Write empty cart
+    await writeCartToFile(emptyCart);
+
+    return sendSuccessResponse(res, [], 'Cart cleared successfully');
   } catch (error) {
     console.error('Error clearing cart:', error);
-    
-    const response: CartResponse = {
-      success: false,
-      error: 'Internal server error while clearing cart',
-      message: 'Failed to clear cart',
-    };
-    
-    res.status(500).json(response);
-  }
-};
-
-export const getCartItem = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { id } = req.params;
-    
-    if (!id) {
-      const response: CartResponse = {
-        success: false,
-        error: 'Item ID is required',
-        message: 'Please provide a valid item ID',
-      };
-      res.status(400).json(response);
-      return;
-    }
-    
-    const cartItem = await getCartItemById(id);
-    
-    if (!cartItem) {
-      const response: CartResponse = {
-        success: false,
-        error: 'Item not found',
-        message: `Item with ID ${id} is not in the cart`,
-      };
-      res.status(404).json(response);
-      return;
-    }
-    
-    const response: CartResponse = {
-      success: true,
-      data: [cartItem],
-      message: 'Cart item retrieved successfully',
-    };
-    
-    res.status(200).json(response);
-  } catch (error) {
-    console.error('Error fetching cart item:', error);
-    
-    const response: CartResponse = {
-      success: false,
-      error: 'Internal server error while fetching cart item',
-      message: 'Failed to retrieve cart item',
-    };
-    
-    res.status(500).json(response);
+    return sendErrorResponse(
+      res, 
+      500, 
+      'Failed to clear cart',
+      { originalError: error instanceof Error ? error.message : 'Unknown error' }
+    );
   }
 };

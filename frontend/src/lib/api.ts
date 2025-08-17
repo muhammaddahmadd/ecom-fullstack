@@ -24,6 +24,7 @@ export interface Product {
   inStock: boolean;
   createdAt: string;
   updatedAt: string;
+  isNew: boolean;
 }
 
 export interface CartItem {

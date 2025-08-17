@@ -9,6 +9,7 @@ export interface Product {
   inStock: boolean;
   createdAt: Date;
   updatedAt: Date;
+  isNew: boolean;
 }
 
 export interface CreateProductRequest {

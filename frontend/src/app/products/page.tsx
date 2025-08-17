@@ -1,25 +1,26 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { ShoppingCart, Star, AlertTriangle, ArrowRight, Loader2 } from 'lucide-react';
+import { fetchProducts } from '../../lib/api';
+import { Product } from '../../lib/api';
 import { useCart } from '../(components)/CartContext';
-import { fetchProducts, fetchProductCategories, Product } from '../../lib/api';
 import { showToast } from '../(components)/Toast';
-import { ShoppingCart, Star, Loader2, AlertCircle, ArrowRight } from 'lucide-react';
+import LoadingSpinner, { FullPageLoader, InlineLoader } from '../(components)/LoadingSpinner';
 
-// PricingCard Component
-type CardProps = {
-  title: string;
-  description: string;
-  price: number;
-  oldPrice?: number;
-  badge?: string;
-  imageUrl?: string;
-  onSubscribe?: () => void;
-  isLoading?: boolean;
+// Local error handling function
+const handleApiError = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === 'string') {
+    return error;
+  }
+  return 'An unexpected error occurred. Please try again.';
 };
 
-const PricingCard: React.FC<CardProps> = ({
+// Product card component (PricingCard) - updated to use Image component and new styling
+function PricingCard({
   title,
   description,
   price,
@@ -27,8 +28,17 @@ const PricingCard: React.FC<CardProps> = ({
   badge,
   imageUrl,
   onSubscribe,
-  isLoading = false,
-}) => {
+  isLoading = false
+}: {
+  title: string;
+  description: string;
+  price: number;
+  oldPrice?: number;
+  badge?: string;
+  imageUrl: string;
+  onSubscribe: () => void;
+  isLoading?: boolean;
+}) {
   return (
     <div className="relative max-w-sm rounded-2xl border border-gray-700 bg-black text-white shadow-lg p-6 flex flex-col gap-4">
       {/* Badge */}
@@ -65,7 +75,7 @@ const PricingCard: React.FC<CardProps> = ({
           <span className="text-gray-500 line-through">${oldPrice}</span>
         )}
         <span className="text-2xl font-bold">${price}</span>
-        <span className="text-sm">USD/monthly</span>
+        <span className="text-sm">USD</span>
       </div>
 
       {/* CTA */}
@@ -84,57 +94,42 @@ const PricingCard: React.FC<CardProps> = ({
             <span>Adding...</span>
           </div>
         ) : (
-          'Subscribe Now'
+          'Add to Cart'
         )}
       </button>
-
-      </div>
+    </div>
   );
-};
+}
 
 export default function ProductsPage() {
-  const { addItem, state } = useCart();
+  const { addItem } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [addingToCart, setAddingToCart] = useState<string | null>(null);
 
   useEffect(() => {
     loadProducts();
-    loadCategories();
   }, []);
 
   const loadProducts = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      setError(null);
       const data = await fetchProducts();
       setProducts(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load products');
-      showToast('Failed to load products', 'error');
+      const errorMessage = handleApiError(err);
+      setError(errorMessage);
+      console.error('Failed to load products:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const loadCategories = async () => {
-    try {
-      const data = await fetchProductCategories();
-      setCategories(data);
-    } catch (err) {
-      console.error('Failed to load categories:', err);
-    }
-  };
-
   const handleAddToCart = async (product: Product) => {
-    if (!product.inStock) return;
-
     try {
       setAddingToCart(product.id);
-      
       await addItem({
         id: product.id,
         name: product.name,
@@ -142,40 +137,32 @@ export default function ProductsPage() {
         quantity: 1,
         image: product.image,
       });
-
       showToast(`${product.name} added to cart!`, 'success');
     } catch (err) {
-      showToast('Failed to add item to cart', 'error');
+      const errorMessage = handleApiError(err);
+      showToast(`Failed to add ${product.name} to cart: ${errorMessage}`, 'error');
+      console.error('Failed to add item to cart:', err);
     } finally {
       setAddingToCart(null);
     }
   };
 
-  const filteredProducts = selectedCategory === 'all' 
-    ? products 
-    : products.filter(product => product.category === selectedCategory);
-
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="text-center">
-          <Loader2 className="mx-auto h-12 w-12 animate-spin text-cyan-400 mb-4" />
-          <p className="text-lg text-gray-300">Loading products...</p>
-        </div>
-      </div>
-    );
+    return <FullPageLoader text="Loading products..." />;
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="text-center">
-          <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
-          <h2 className="text-xl font-semibold text-white mb-2">Error Loading Products</h2>
-          <p className="text-gray-300 mb-4">{error}</p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6 text-center">
+          <div className="flex justify-center mb-4">
+            <AlertTriangle className="w-16 h-16 text-red-500" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Failed to Load Products</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
           <button
             onClick={loadProducts}
-            className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors"
+            className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
           >
             Try Again
           </button>
@@ -186,69 +173,31 @@ export default function ProductsPage() {
 
   return (
     <div className="min-h-screen bg-gray-950">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-white mb-4">Our Products</h1>
-          <p className="text-lg text-gray-300">Discover amazing products at great prices</p>
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-4xl font-bold mb-4">Our Products</h1>
+          <p className="text-xl text-blue-100">Discover amazing products at great prices</p>
         </div>
-
-        {/* Category Filter */}
-        <div className="flex flex-wrap justify-center gap-4 mb-8">
-          <button
-            onClick={() => setSelectedCategory('all')}
-            className={`px-6 py-2 rounded-full font-medium transition-colors duration-200 ${
-              selectedCategory === 'all'
-                ? 'bg-cyan-600 text-white'
-                : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-            }`}
-          >
-            All Products
-          </button>
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`px-6 py-2 rounded-full font-medium transition-colors duration-200 ${
-                selectedCategory === category
-                  ? 'bg-cyan-600 text-white'
-                  : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-              }`}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
-
-        {/* Products Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
-          {filteredProducts.map((product) => (
+      </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {products.map((product) => (
             <PricingCard
               key={product.id}
               title={product.name}
               description={product.description}
               price={product.price}
               oldPrice={product.price > 100 ? Math.round(product.price * 1.2) : undefined}
-              badge="NEW"
+              badge={product.isNew ? "NEW" : undefined}
               imageUrl={product.image}
               onSubscribe={() => handleAddToCart(product)}
               isLoading={addingToCart === product.id}
             />
           ))}
         </div>
-
-        {filteredProducts.length === 0 && (
+        {products.length === 0 && !loading && (
           <div className="text-center py-12">
-            <p className="text-gray-400 text-lg">No products found in this category.</p>
-          </div>
-        )}
-
-        {/* Cart Status */}
-        {state.items.length > 0 && (
-          <div className="mt-8 text-center">
-            <p className="text-gray-300">
-              You have {state.itemCount} item{state.itemCount !== 1 ? 's' : ''} in your cart
-            </p>
+            <p className="text-gray-500 text-lg">No products found.</p>
           </div>
         )}
       </div>

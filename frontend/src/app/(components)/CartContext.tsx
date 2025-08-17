@@ -1,185 +1,184 @@
 'use client';
+import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import { CartItem } from '../../lib/api';
 
-import { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
-import { CartItem, Cart, addToCart as apiAddToCart, updateCartItem as apiUpdateCartItem, removeFromCart as apiRemoveFromCart, clearCart as apiClearCart, getCart as apiGetCart } from '../../lib/api';
-
+// Cart state interface
 interface CartState {
   items: CartItem[];
-  total: number;
-  itemCount: number;
   isLoading: boolean;
   error: string | null;
+  itemCount: number;
+  total: number;
 }
 
+// Cart actions
 type CartAction =
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }
-  | { type: 'SET_CART'; payload: Cart }
+  | { type: 'SET_CART'; payload: CartItem[] }
   | { type: 'ADD_ITEM'; payload: CartItem }
   | { type: 'REMOVE_ITEM'; payload: string }
   | { type: 'UPDATE_QUANTITY'; payload: { id: string; quantity: number } }
   | { type: 'CLEAR_CART' }
-  | { type: 'SYNC_CART'; payload: Cart };
+  | { type: 'SYNC_CART'; payload: CartItem[] };
 
-const initialState: CartState = {
-  items: [],
-  total: 0,
-  itemCount: 0,
-  isLoading: false,
-  error: null,
-};
-
-function cartReducer(state: CartState, action: CartAction): CartState {
+// Cart reducer
+const cartReducer = (state: CartState, action: CartAction): CartState => {
   switch (action.type) {
     case 'SET_LOADING':
       return { ...state, isLoading: action.payload };
-    
     case 'SET_ERROR':
       return { ...state, error: action.payload };
-    
     case 'SET_CART':
       return {
         ...state,
-        items: action.payload.items,
-        total: action.payload.total,
-        itemCount: action.payload.itemCount,
-        error: null,
+        items: action.payload,
+        itemCount: action.payload.reduce((sum, item) => sum + item.quantity, 0),
+        total: action.payload.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+        isLoading: false,
+        error: null
       };
-    
-    case 'SYNC_CART':
-      return {
-        ...state,
-        items: action.payload.items,
-        total: action.payload.total,
-        itemCount: action.payload.itemCount,
-        error: null,
-      };
-    
-    case 'ADD_ITEM': {
+    case 'ADD_ITEM':
       const existingItem = state.items.find(item => item.id === action.payload.id);
-      
+      let newItems;
       if (existingItem) {
-        const updatedItems = state.items.map(item =>
+        newItems = state.items.map(item =>
           item.id === action.payload.id
             ? { ...item, quantity: item.quantity + action.payload.quantity }
             : item
         );
-        
-        return {
-          ...state,
-          items: updatedItems,
-          total: updatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-          itemCount: updatedItems.reduce((sum, item) => sum + item.quantity, 0),
-        };
       } else {
-        const newItems = [...state.items, action.payload];
-        return {
-          ...state,
-          items: newItems,
-          total: newItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-          itemCount: newItems.reduce((sum, item) => sum + item.quantity, 0),
-        };
+        newItems = [...state.items, action.payload];
       }
-    }
-    
-    case 'REMOVE_ITEM': {
-      const updatedItems = state.items.filter(item => item.id !== action.payload);
       return {
         ...state,
-        items: updatedItems,
-        total: updatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-        itemCount: updatedItems.reduce((sum, item) => sum + item.quantity, 0),
+        items: newItems,
+        itemCount: newItems.reduce((sum, item) => sum + item.quantity, 0),
+        total: newItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
       };
-    }
-    
-    case 'UPDATE_QUANTITY': {
+    case 'REMOVE_ITEM':
+      const filteredItems = state.items.filter(item => item.id !== action.payload);
+      return {
+        ...state,
+        items: filteredItems,
+        itemCount: filteredItems.reduce((sum, item) => sum + item.quantity, 0),
+        total: filteredItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+      };
+    case 'UPDATE_QUANTITY':
       const updatedItems = state.items.map(item =>
         item.id === action.payload.id
           ? { ...item, quantity: action.payload.quantity }
           : item
       );
-      
       return {
         ...state,
         items: updatedItems,
-        total: updatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
         itemCount: updatedItems.reduce((sum, item) => sum + item.quantity, 0),
+        total: updatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
       };
-    }
-    
     case 'CLEAR_CART':
       return {
         ...state,
         items: [],
-        total: 0,
         itemCount: 0,
+        total: 0
       };
-    
+    case 'SYNC_CART':
+      return {
+        ...state,
+        items: action.payload,
+        itemCount: action.payload.reduce((sum, item) => sum + item.quantity, 0),
+        total: action.payload.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+        isLoading: false,
+        error: null
+      };
     default:
       return state;
   }
-}
+};
 
-interface CartContextType {
+// Local storage utilities
+const CART_STORAGE_KEY = 'ecommerce_cart';
+
+const saveCartToStorage = (items: CartItem[]) => {
+  try {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+  } catch (error) {
+    console.error('Failed to save cart to localStorage:', error);
+  }
+};
+
+const loadCartFromStorage = (): CartItem[] => {
+  try {
+    const stored = localStorage.getItem(CART_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.error('Failed to load cart from localStorage:', error);
+    return [];
+  }
+};
+
+// Initial state
+const initialState: CartState = {
+  items: [],
+  isLoading: false,
+  error: null,
+  itemCount: 0,
+  total: 0
+};
+
+// Create context
+const CartContext = createContext<{
   state: CartState;
   addItem: (item: CartItem) => Promise<void>;
   removeItem: (id: string) => Promise<void>;
   updateQuantity: (id: string, quantity: number) => Promise<void>;
   clearCart: () => Promise<void>;
-  getCartCount: () => number;
   refreshCart: () => Promise<void>;
-  syncCart: (cart: Cart) => void;
-}
+  getCartCount: () => number;
+} | undefined>(undefined);
 
-const CartContext = createContext<CartContextType | undefined>(undefined);
-
-export function CartProvider({ children }: { children: ReactNode }) {
+// Cart provider component
+export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(cartReducer, initialState);
 
-  // Load cart from API on mount
+  // Load cart from localStorage on mount
   useEffect(() => {
-    refreshCart();
+    const savedCart = loadCartFromStorage();
+    if (savedCart.length > 0) {
+      dispatch({ type: 'SET_CART', payload: savedCart });
+    }
   }, []);
 
-  const refreshCart = async () => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      dispatch({ type: 'SET_ERROR', payload: null });
-      
-      const cart = await apiGetCart();
-      dispatch({ type: 'SET_CART', payload: cart });
-    } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Failed to load cart' });
-    } finally {
-      dispatch({ type: 'SET_LOADING', payload: false });
-    }
-  };
+  // Save cart to localStorage whenever items change
+  useEffect(() => {
+    saveCartToStorage(state.items);
+  }, [state.items]);
+
+  // API functions
+  const { getCart, addToCart, updateCartItem, removeFromCart } = require('../../lib/api');
 
   const addItem = async (item: CartItem) => {
+    dispatch({ type: 'SET_LOADING', payload: true });
     try {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      dispatch({ type: 'SET_ERROR', payload: null });
-      
-      const updatedCart = await apiAddToCart(item);
-      dispatch({ type: 'SYNC_CART', payload: updatedCart });
+      await addToCart(item);
+      dispatch({ type: 'ADD_ITEM', payload: item });
     } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Failed to add item to cart' });
-      throw error;
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to add item to cart' });
+      console.error('Error adding item to cart:', error);
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
   };
 
   const removeItem = async (id: string) => {
+    dispatch({ type: 'SET_LOADING', payload: true });
     try {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      dispatch({ type: 'SET_ERROR', payload: null });
-      
-      const updatedCart = await apiRemoveFromCart(id);
-      dispatch({ type: 'SYNC_CART', payload: updatedCart });
+      await removeFromCart(id);
+      dispatch({ type: 'REMOVE_ITEM', payload: id });
     } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Failed to remove item from cart' });
-      throw error;
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to remove item from cart' });
+      console.error('Error removing item from cart:', error);
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
@@ -190,66 +189,70 @@ export function CartProvider({ children }: { children: ReactNode }) {
       await removeItem(id);
       return;
     }
-
+    
+    dispatch({ type: 'SET_LOADING', payload: true });
     try {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      dispatch({ type: 'SET_ERROR', payload: null });
-      
-      const updatedCart = await apiUpdateCartItem(id, quantity);
-      dispatch({ type: 'SYNC_CART', payload: updatedCart });
+      await updateCartItem(id, quantity);
+      dispatch({ type: 'UPDATE_QUANTITY', payload: { id, quantity } });
     } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Failed to update cart item' });
-      throw error;
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to update item quantity' });
+      console.error('Error updating item quantity:', error);
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
   };
 
   const clearCart = async () => {
+    dispatch({ type: 'SET_LOADING', payload: true });
     try {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      dispatch({ type: 'SET_ERROR', payload: null });
-      
-      const updatedCart = await apiClearCart();
-      dispatch({ type: 'SYNC_CART', payload: updatedCart });
+      // Clear from backend (if you have a clear endpoint)
+      // await clearCartAPI();
+      dispatch({ type: 'CLEAR_CART' });
     } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Failed to clear cart' });
-      throw error;
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to clear cart' });
+      console.error('Error clearing cart:', error);
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
   };
 
-  const getCartCount = () => {
-    return state.itemCount;
+  const refreshCart = async () => {
+    dispatch({ type: 'SET_LOADING', payload: true });
+    try {
+      const cartData = await getCart();
+      dispatch({ type: 'SYNC_CART', payload: cartData });
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to load cart' });
+      console.error('Error loading cart:', error);
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
   };
 
-  const syncCart = (cart: Cart) => {
-    dispatch({ type: 'SYNC_CART', payload: cart });
+  const getCartCount = () => state.itemCount;
+
+  const value = {
+    state,
+    addItem,
+    removeItem,
+    updateQuantity,
+    clearCart,
+    refreshCart,
+    getCartCount
   };
 
   return (
-    <CartContext.Provider
-      value={{
-        state,
-        addItem,
-        removeItem,
-        updateQuantity,
-        clearCart,
-        getCartCount,
-        refreshCart,
-        syncCart,
-      }}
-    >
+    <CartContext.Provider value={value}>
       {children}
     </CartContext.Provider>
   );
-}
+};
 
-export function useCart() {
+// Custom hook to use cart context
+export const useCart = () => {
   const context = useContext(CartContext);
   if (context === undefined) {
     throw new Error('useCart must be used within a CartProvider');
   }
   return context;
-}
+};

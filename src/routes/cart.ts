@@ -4,8 +4,7 @@ import {
   addToCart, 
   updateCartItem, 
   removeFromCart, 
-  clearCartItems,
-  getCartItem 
+  clearCartItems
 } from '../controllers/cartController';
 
 const router = Router();
@@ -15,9 +14,6 @@ router.get('/', getCart);
 
 // POST /api/cart - Add new item to cart
 router.post('/', addToCart);
-
-// GET /api/cart/:id - Get specific cart item
-router.get('/:id', getCartItem);
 
 // PUT /api/cart/:id - Update cart item quantity
 router.put('/:id', updateCartItem);

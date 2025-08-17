@@ -1,5 +1,6 @@
-import express, { Express, Request, Response } from 'express';
+import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import { connectDB } from './config/database';
 import productsRoutes from './routes/products';
 import cartRoutes from './routes/cart';
 
@@ -11,11 +12,15 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Connect to MongoDB
+connectDB();
+
 // Basic route
 app.get('/', (_req: Request, res: Response) => {
-  res.json({ 
+  res.json({
     message: 'Welcome to the E-commerce Express Server!',
-    version: '2.0.0',
+    version: '3.0.0',
+    database: 'MongoDB',
     endpoints: {
       health: '/health',
       products: '/api/products',
@@ -26,11 +31,12 @@ app.get('/', (_req: Request, res: Response) => {
 
 // Health check route
 app.get('/health', (_req: Request, res: Response) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    database: 'MongoDB'
   });
 });
 
@@ -53,9 +59,9 @@ app.use('*', (req: Request, res: Response) => {
 });
 
 // Global error handler
-app.use((error: Error, _req: Request, res: Response, _next: Function) => {
+app.use((error: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error('Global error handler:', error);
-  
+
   res.status(500).json({
     success: false,
     error: 'Internal server error',
@@ -66,7 +72,8 @@ app.use((error: Error, _req: Request, res: Response, _next: Function) => {
 
 // Start the server
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server is running on http://0.0.0.0:${PORT}`);
+  console.log(`🚀 Server is running on http://0.0.0.0:${PORT}`);
+  console.log('📊 Database: MongoDB');
   console.log('Available endpoints:');
   console.log(`- GET /health`);
   console.log(`- GET /api/products`);

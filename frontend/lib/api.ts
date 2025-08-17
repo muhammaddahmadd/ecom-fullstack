@@ -116,7 +116,7 @@ const retryRequest = async <T>(
 
 // TypeScript interfaces
 export interface Product {
-  id: string;
+  _id: string;
   name: string;
   price: number;
   image: string;
@@ -124,9 +124,9 @@ export interface Product {
   category: string;
   rating: number;
   inStock: boolean;
-  createdAt: Date;
-  updatedAt: Date;
   isNew: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CartItem {

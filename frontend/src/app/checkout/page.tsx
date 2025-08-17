@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCart } from '../(components)/CartContext';
 import { useRouter } from 'next/navigation';
 import { CreditCard, Truck, Lock, AlertCircle } from 'lucide-react';
@@ -27,6 +27,7 @@ export default function CheckoutPage() {
   const { items, total } = state;
   const [isProcessing, setIsProcessing] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [shouldRedirect, setShouldRedirect] = useState(false);
 
   const [formData, setFormData] = useState<CheckoutForm>({
     name: '',
@@ -37,6 +38,19 @@ export default function CheckoutPage() {
     cardExpiry: '',
     cardCvc: '',
   });
+
+  // Handle redirect when cart is empty
+  useEffect(() => {
+    if (items.length === 0 && !shouldRedirect) {
+      setShouldRedirect(true);
+      router.push('/cart');
+    }
+  }, [items.length, shouldRedirect, router]);
+
+  // Don't render anything while redirecting
+  if (shouldRedirect || items.length === 0) {
+    return null;
+  }
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -164,11 +178,6 @@ export default function CheckoutPage() {
       setIsProcessing(false);
     }
   };
-
-  if (items.length === 0) {
-    router.push('/cart');
-    return null;
-  }
 
   const tax = total * 0.08;
   const finalTotal = total + tax;

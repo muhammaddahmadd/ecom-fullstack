@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { CheckCircle, XCircle, X } from 'lucide-react';
 
 export interface ToastProps {
@@ -86,23 +86,23 @@ export default function Toast({ message, type, duration = 3000, onClose }: Toast
 export function ToastContainer() {
   const [toasts, setToasts] = useState<Array<{ id: string } & ToastProps>>([]);
 
-  const addToast = (toast: Omit<ToastProps, 'onClose'>) => {
+  const removeToast = useCallback((id: string) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  }, []);
+
+  const addToast = useCallback((toast: Omit<ToastProps, 'onClose'>) => {
     const id = Math.random().toString(36).substr(2, 9);
     const newToast = { ...toast, id, onClose: () => removeToast(id) };
     setToasts(prev => [...prev, newToast]);
-  };
-
-  const removeToast = (id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
-  };
+  }, [removeToast]);
 
   // Expose addToast globally
   useEffect(() => {
-    (window as any).showToast = addToast;
+    (window as { showToast?: typeof addToast }).showToast = addToast;
     return () => {
-      delete (window as any).showToast;
+      delete (window as { showToast?: typeof addToast }).showToast;
     };
-  }, []);
+  }, [addToast]);
 
   return (
     <div className="fixed top-0 right-0 z-50 p-4 space-y-2">
@@ -115,7 +115,10 @@ export function ToastContainer() {
 
 // Utility function to show toast
 export const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info', duration?: number) => {
-  if (typeof window !== 'undefined' && (window as any).showToast) {
-    (window as any).showToast({ message, type, duration });
+  if (typeof window !== 'undefined') {
+    const windowWithToast = window as { showToast?: (toast: Omit<ToastProps, 'onClose'>) => void };
+    if (windowWithToast.showToast) {
+      windowWithToast.showToast({ message, type, duration });
+    }
   }
 };

@@ -26,7 +26,7 @@ export default function CheckoutCartItem({ item }: CheckoutCartItemProps) {
     try {
       setIsUpdating(true);
       await updateQuantity(item.id, newQuantity);
-    } catch (error) {
+    } catch {
       showToast('Failed to update quantity', 'error');
     } finally {
       setIsUpdating(false);
@@ -38,7 +38,7 @@ export default function CheckoutCartItem({ item }: CheckoutCartItemProps) {
       setIsUpdating(true);
       await removeItem(item.id);
       showToast('Item removed from cart', 'success');
-    } catch (error) {
+    } catch {
       showToast('Failed to remove item', 'error');
     } finally {
       setIsUpdating(false);

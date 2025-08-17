@@ -14,7 +14,7 @@ export default function CartPage() {
     try {
       await removeItem(id);
       showToast('Item removed from cart', 'success');
-    } catch (err) {
+    } catch {
       showToast('Failed to remove item', 'error');
     }
   };
@@ -23,7 +23,7 @@ export default function CartPage() {
     try {
       await updateQuantity(id, newQuantity);
       showToast('Cart updated successfully', 'success');
-    } catch (err) {
+    } catch {
       showToast('Failed to update cart', 'error');
     }
   };
@@ -32,7 +32,7 @@ export default function CartPage() {
     try {
       await clearCart();
       showToast('Cart cleared successfully', 'success');
-    } catch (err) {
+    } catch {
       showToast('Failed to clear cart', 'error');
     }
   };
@@ -67,7 +67,7 @@ export default function CartPage() {
           <ShoppingBag className="mx-auto h-16 w-16 sm:h-24 sm:w-24 text-gray-400 mb-4 sm:mb-6" />
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">Your cart is empty</h2>
           <p className="text-base sm:text-lg text-gray-600 mb-6 sm:mb-8">
-            Looks like you haven't added any items to your cart yet.
+            Looks like you haven&apos;t added any items to your cart yet.
           </p>
           <Link
             href="/products"

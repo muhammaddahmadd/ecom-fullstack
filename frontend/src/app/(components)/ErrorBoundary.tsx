@@ -54,7 +54,7 @@ export class ErrorBoundary extends Component<Props, State> {
             </h2>
             
             <p className="text-gray-600 mb-6">
-              We're sorry, but something unexpected happened. Please try refreshing the page.
+              We&apos;re sorry, but something unexpected happened. Please try refreshing the page.
             </p>
 
             {process.env.NODE_ENV === 'development' && this.state.error && (
@@ -105,7 +105,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
 // Hook for functional components to handle errors
 export const useErrorHandler = () => {
-  const handleError = (error: Error, errorInfo?: any) => {
+  const handleError = (error: Error, errorInfo?: ErrorInfo) => {
     console.error('Error caught by useErrorHandler:', error, errorInfo);
     
     // You can add error reporting service calls here

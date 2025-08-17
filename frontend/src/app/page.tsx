@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useCart } from './(components)/CartContext';
 import { fetchProducts, Product } from '../lib/api';
 import { showToast } from './(components)/Toast';
-import { ShoppingCart, Star, ArrowRight, Shield, Truck, Clock, Loader2 } from 'lucide-react';
+import { ArrowRight, Shield, Truck, Clock, Loader2, ShoppingCart } from 'lucide-react';
 
 // PricingCard Component (same as products page)
 type CardProps = {
@@ -41,9 +41,11 @@ const PricingCard: React.FC<CardProps> = ({
 
       {/* Icon */}
       {imageUrl ? (
-        <img
+        <Image
           src={imageUrl}
           alt={title}
+          width={64}
+          height={64}
           className="w-16 h-16 rounded-lg object-cover"
         />
       ) : (
@@ -131,7 +133,7 @@ export default function Home() {
       });
 
       showToast(`${product.name} added to cart!`, 'success');
-    } catch (err) {
+    } catch {
       showToast('Failed to add item to cart', 'error');
     } finally {
       setAddingToCart(null);
@@ -174,7 +176,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-white mb-4">Why Choose EcomStore?</h2>
-            <p className="text-lg text-gray-300">We're committed to providing the best shopping experience</p>
+            <p className="text-lg text-gray-300">We&apos;re committed to providing the best shopping experience</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

@@ -6,7 +6,7 @@ import { ShoppingCart, Menu, X } from 'lucide-react';
 import { useCart } from './CartContext';
 
 export default function Header() {
-  const { getCartCount, state } = useCart();
+  const { getCartCount } = useCart();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [cartCount, setCartCount] = useState(0);

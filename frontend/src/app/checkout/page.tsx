@@ -172,7 +172,7 @@ export default function CheckoutPage() {
       
       // Redirect to success page
       router.push('/checkout/success');
-    } catch (error) {
+    } catch {
       showToast('Failed to process order. Please try again.', 'error');
     } finally {
       setIsProcessing(false);

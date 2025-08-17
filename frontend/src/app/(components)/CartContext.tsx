@@ -1,6 +1,6 @@
 'use client';
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { CartItem } from '../../lib/api';
+import { CartItem, getCart, addToCart, updateCartItem, removeFromCart } from '../../lib/api';
 
 // Cart state interface
 interface CartState {
@@ -156,8 +156,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [state.items]);
 
   // API functions
-  const { getCart, addToCart, updateCartItem, removeFromCart } = require('../../lib/api');
-
   const addItem = async (item: CartItem) => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
@@ -220,7 +218,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       const cartData = await getCart();
-      dispatch({ type: 'SYNC_CART', payload: cartData });
+      dispatch({ type: 'SYNC_CART', payload: cartData.items });
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: 'Failed to load cart' });
       console.error('Error loading cart:', error);

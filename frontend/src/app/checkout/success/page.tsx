@@ -47,14 +47,14 @@ export default function CheckoutSuccessPage() {
 
           {/* Next Steps */}
           <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">What's Next?</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">What&apos;s Next?</h2>
             <div className="space-y-4">
               <div className="flex items-start space-x-3">
                 <Mail className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-gray-900">Confirmation Email</p>
                   <p className="text-sm text-gray-600">
-                    You'll receive an order confirmation email shortly with all the details.
+                    You&apos;ll receive an order confirmation email shortly with all the details.
                   </p>
                 </div>
               </div>
@@ -64,7 +64,7 @@ export default function CheckoutSuccessPage() {
                 <div>
                   <p className="text-sm font-medium text-gray-900">Order Processing</p>
                   <p className="text-sm text-gray-600">
-                    We'll start processing your order and ship it within 1-2 business days.
+                    We&apos;ll start processing your order and ship it within 1-2 business days.
                   </p>
                 </div>
               </div>

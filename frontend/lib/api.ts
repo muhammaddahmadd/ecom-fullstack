@@ -42,7 +42,7 @@ api.interceptors.response.use(
     if (error.response) {
       // Server responded with error status
       const status = error.response.status;
-      const data = error.response.data as any;
+      const data = error.response.data as { message?: string };
       
       switch (status) {
         case 400:

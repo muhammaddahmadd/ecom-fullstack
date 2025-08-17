@@ -1,12 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { ShoppingCart, Star, AlertTriangle, ArrowRight, Loader2 } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Loader2 } from 'lucide-react';
 import { fetchProducts } from '../../lib/api';
 import { Product } from '../../lib/api';
 import { useCart } from '../(components)/CartContext';
 import { showToast } from '../(components)/Toast';
-import LoadingSpinner, { FullPageLoader, InlineLoader } from '../(components)/LoadingSpinner';
+import { FullPageLoader } from '../(components)/LoadingSpinner';
 
 // Local error handling function
 const handleApiError = (error: unknown): string => {
@@ -50,9 +50,11 @@ function PricingCard({
 
       {/* Icon */}
       {imageUrl ? (
-        <img
+        <Image
           src={imageUrl}
           alt={title}
+          width={64}
+          height={64}
           className="w-16 h-16 rounded-lg object-cover"
         />
       ) : (

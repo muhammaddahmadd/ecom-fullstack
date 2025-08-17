@@ -64,7 +64,7 @@ export interface ApiResponse<T> {
 }
 
 // Error handling utility
-const handleApiError = (error: any): never => {
+const handleApiError = (error: unknown): never => {
   if (axios.isAxiosError(error)) {
     const message = error.response?.data?.message || error.message || 'An error occurred';
     throw new Error(message);
@@ -85,7 +85,7 @@ export const fetchProducts = async (filters?: {
     const response: AxiosResponse<ApiResponse<Product[]>> = await api.get(`/api/products?${params}`);
     return response.data.data;
   } catch (error) {
-    handleApiError(error);
+    return handleApiError(error);
   }
 };
 
@@ -94,7 +94,7 @@ export const fetchProductById = async (id: string): Promise<Product> => {
     const response: AxiosResponse<ApiResponse<Product>> = await api.get(`/api/products/${id}`);
     return response.data.data;
   } catch (error) {
-    handleApiError(error);
+    return handleApiError(error);
   }
 };
 
@@ -103,7 +103,7 @@ export const fetchProductCategories = async (): Promise<string[]> => {
     const response: AxiosResponse<ApiResponse<string[]>> = await api.get('/api/products/categories');
     return response.data.data;
   } catch (error) {
-    handleApiError(error);
+    return handleApiError(error);
   }
 };
 
@@ -119,7 +119,7 @@ export const searchProducts = async (query: string, filters?: {
     const response: AxiosResponse<ApiResponse<Product[]>> = await api.get(`/api/products/search?${params}`);
     return response.data.data;
   } catch (error) {
-    handleApiError(error);
+    return handleApiError(error);
   }
 };
 
@@ -129,7 +129,7 @@ export const getCart = async (): Promise<Cart> => {
     const response: AxiosResponse<ApiResponse<Cart>> = await api.get('/api/cart');
     return response.data.data;
   } catch (error) {
-    handleApiError(error);
+    return handleApiError(error);
   }
 };
 
@@ -138,7 +138,7 @@ export const addToCart = async (item: AddToCartRequest): Promise<Cart> => {
     const response: AxiosResponse<ApiResponse<Cart>> = await api.post('/api/cart', item);
     return response.data.data;
   } catch (error) {
-    handleApiError(error);
+    return handleApiError(error);
   }
 };
 
@@ -147,7 +147,7 @@ export const updateCartItem = async (id: string, quantity: number): Promise<Cart
     const response: AxiosResponse<ApiResponse<Cart>> = await api.put(`/api/cart/${id}`, { quantity });
     return response.data.data;
   } catch (error) {
-    handleApiError(error);
+    return handleApiError(error);
   }
 };
 
@@ -156,7 +156,7 @@ export const removeFromCart = async (id: string): Promise<Cart> => {
     const response: AxiosResponse<ApiResponse<Cart>> = await api.delete(`/api/cart/${id}`);
     return response.data.data;
   } catch (error) {
-    handleApiError(error);
+    return handleApiError(error);
   }
 };
 
@@ -165,7 +165,7 @@ export const clearCart = async (): Promise<Cart> => {
     const response: AxiosResponse<ApiResponse<Cart>> = await api.delete('/api/cart');
     return response.data.data;
   } catch (error) {
-    handleApiError(error);
+    return handleApiError(error);
   }
 };
 
@@ -174,7 +174,7 @@ export const getCartItem = async (id: string): Promise<CartItem | null> => {
     const response: AxiosResponse<ApiResponse<CartItem[]>> = await api.get(`/api/cart/${id}`);
     return response.data.data[0] || null;
   } catch (error) {
-    handleApiError(error);
+    return handleApiError(error);
   }
 };
 
@@ -184,7 +184,7 @@ export const checkHealth = async (): Promise<{ status: string; timestamp: string
     const response = await api.get('/health');
     return response.data;
   } catch (error) {
-    handleApiError(error);
+    return handleApiError(error);
   }
 };
 

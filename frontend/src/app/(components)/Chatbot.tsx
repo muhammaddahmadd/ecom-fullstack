@@ -98,10 +98,7 @@ export default function Chatbot({ className = '' }: ChatbotProps) {
     if (message.includes('help') || message.includes('support')) {
       return 'I\'m here to help! I can assist with product questions, order status, shipping info, returns, and more. What would you like to know?';
     }
-    
-    if (message.includes('created') || message.includes('own')) {
-          return 'Ahmad is the creator of this website. He is a software engineer and a great person.';
-    }
+
 
     // Default responses
     const responses = [

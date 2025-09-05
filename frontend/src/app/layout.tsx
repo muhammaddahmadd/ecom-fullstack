@@ -5,6 +5,7 @@ import { CartProvider } from './(components)/CartContext';
 import Header from './(components)/Header';
 import { ToastContainer } from './(components)/Toast';
 import ErrorBoundary from './(components)/ErrorBoundary';
+import Chatbot from './(components)/Chatbot';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -28,6 +29,7 @@ export default function RootLayout({
               {children}
             </main>
             <ToastContainer />
+            <Chatbot />
           </CartProvider>
         </ErrorBoundary>
       </body>

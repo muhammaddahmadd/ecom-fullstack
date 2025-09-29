@@ -8,6 +8,7 @@ import { useCart } from '../(components)/CartContext';
 import { showToast } from '../(components)/Toast';
 import { FullPageLoader } from '../(components)/LoadingSpinner';
 
+
 // Local error handling function
 const handleApiError = (error: unknown): string => {
   if (error instanceof Error) {

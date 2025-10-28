@@ -11,7 +11,6 @@ interface CartState {
   total: number;
 }
 
-
 // Cart actions
 type CartAction =
   | { type: 'SET_LOADING'; payload: boolean }

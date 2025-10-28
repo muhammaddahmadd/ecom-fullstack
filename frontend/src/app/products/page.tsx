@@ -90,6 +90,7 @@ function PricingCard({
             : 'bg-sky-400 hover:bg-sky-500 text-black'
         }`}
       >
+        
         {isLoading ? (
           <div className="flex items-center justify-center">
             <Loader2 className="w-4 h-4 animate-spin mr-2" />

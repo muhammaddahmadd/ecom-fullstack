@@ -19,6 +19,7 @@ const handleApiError = (error: unknown): string => {
   return 'An unexpected error occurred. Please try again.';
 };
 
+
 // Product card component (PricingCard) - updated to use Image component and new styling
 function PricingCard({
   title,
